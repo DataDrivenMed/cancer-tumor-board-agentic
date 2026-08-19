@@ -24,8 +24,8 @@ STAGES = ("intake", "review", "evidence", "analysis", "brief")
 STAGE_LABELS = {
     "intake": "Case intake",
     "review": "Case review",
-    "evidence": "Evidence",
-    "analysis": "Analysis",
+    "evidence": "Evidence review",
+    "analysis": "Agent analysis",
     "brief": "Decision brief",
 }
 
@@ -123,6 +123,14 @@ def initialize_state() -> None:
             "safety_attested": 0,
         },
         "ag_history": [],
+        "ag_intake_mode": "new",
+        "ag_review_section": "summary",
+        "ag_inspector_mode": "Clinical",
+        "ag_onboarding_open": True,
+        "ag_patient_context": "",
+        "ag_clinician_override": "",
+        "ag_clinician_override_reason": "",
+        "ag_change_log": [],
     }
     for key, value in defaults.items():
         if key not in st.session_state:
