@@ -23,60 +23,31 @@ from services.pathway_validation import COMMON_CORE_QUALIFICATION, get_pathway_v
 
 def _nav(active: str) -> None:
     with st.sidebar:
-        st.markdown(
-            '<div class="fx-side-brand"><div class="fx-side-mark">TB</div><div>'
-            '<div class="fx-side-name">Tumor Board</div>'
-            '<div class="fx-side-sub">Governed research decision support</div></div></div>',
-            unsafe_allow_html=True,
-        )
-        links = [
-            ("pages/04_Agentic_Workspace.py", "Agentic Workspace", "agentic"),
-            ("pages/01_Validation.py", "Validation & scope", "validation"),
-            ("pages/03_Architecture.py", "Architecture", "architecture"),
-            ("pages/02_About.py", "Scientific scope", "about"),
-        ]
+        st.markdown('<div class="fx-side-brand"><div class="fx-side-mark">TB</div><div><div class="fx-side-name">Tumor Board Intelligence</div><div class="fx-side-sub">Governed agentic workup</div></div></div>', unsafe_allow_html=True)
+        links=[("pages/04_Agentic_Workspace.py","Agentic workspace","agentic"),("pages/01_Validation.py","Validation & scope","validation"),("pages/03_Architecture.py","Architecture","architecture"),("pages/02_About.py","Scientific scope","about")]
         st.markdown('<div class="fx-side-label">Navigate</div>', unsafe_allow_html=True)
-        for page, label, key in links:
-            st.page_link(page, label=label, disabled=active == key, use_container_width=True)
-        st.markdown(
-            '<div class="fx-side-label">System</div><div class="fx-side-system">'
-            '<div><i></i><strong>Common core qualified</strong></div>'
-            '<span>Frozen synthetic software qualification record available</span>'
-            '<div><i class="amber"></i><strong>Clinical release not established</strong></div></div>',
-            unsafe_allow_html=True,
-        )
+        for page,label,key in links: st.page_link(page,label=label,disabled=active==key,use_container_width=True)
+        st.markdown('<div class="fx-side-label">Trust boundary</div><div class="ref-side-state"><b>✓ Common core qualified</b><span>Frozen software qualification record</span></div><div class="ref-side-state warn"><b>△ Clinical release not established</b><span>Software qualification is not clinical validation</span></div>', unsafe_allow_html=True)
 
 
 def _base(active: str) -> None:
-    inject_xai_theme()
-    _nav(active)
-    st.markdown(
-        """
+    inject_xai_theme(); _nav(active)
+    st.markdown("""
 <style>
-.ref-hero{padding:18px 0 26px;max-width:960px;border-bottom:1px solid var(--line);margin-bottom:22px}
-.ref-hero h1{font-size:46px;line-height:1.04;margin:7px 0 10px}.ref-hero p{font-size:15px;line-height:1.65;color:var(--body);max-width:880px}
-.ref-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0 22px}.ref-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.ref-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.ref-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px}.ref-card.primary{background:var(--panelhi);border-color:var(--linehi)}.ref-card h3{font-size:18px;margin:0 0 6px}.ref-card p{font-size:12.5px;line-height:1.55;margin:0;color:var(--body)}
-.ref-kpi{font-family:var(--serif);font-size:30px;color:var(--ink);font-weight:500}.ref-kpi-label{font:600 9.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:5px}
-.ref-section{font-family:var(--serif);font-size:28px;color:var(--ink);font-weight:500;margin:31px 0 6px}.ref-sub{font-size:13px;color:var(--muted);line-height:1.55;max-width:900px;margin-bottom:12px}
-.ref-row{display:grid;grid-template-columns:1.25fr 1fr 2.4fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:12px}.ref-row strong{color:var(--ink)}.ref-row span{color:var(--body)}
-.ref-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:14px 0}.ref-node{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:13px}.ref-node b{display:block;color:var(--ink);font-size:13px}.ref-node small{display:block;color:var(--muted);font-size:10.5px;line-height:1.45;margin-top:5px}
-.ref-warning{background:rgba(224,176,98,.08);border:1px solid rgba(224,176,98,.3);border-radius:var(--r);padding:14px 15px;color:var(--body);font-size:12.5px;line-height:1.55}.ref-ok{background:rgba(108,194,160,.08);border:1px solid rgba(108,194,160,.28);border-radius:var(--r);padding:14px 15px;color:var(--body);font-size:12.5px;line-height:1.55}
-.ref-policy{display:grid;grid-template-columns:90px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2)}.ref-policy b{font:700 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em}.ref-policy span{font-size:12px;color:var(--body);line-height:1.5}
-.ref-stream{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:13px 14px;margin:7px 0}.ref-stream strong{font-size:13px;color:var(--ink)}.ref-stream small{display:block;font-size:11px;color:var(--muted);line-height:1.45;margin-top:4px}.ref-stream .count{font-family:var(--serif);font-size:26px;color:var(--accent2);white-space:nowrap}
-@media(max-width:900px){.ref-grid,.ref-grid.four,.ref-grid.two{grid-template-columns:1fr}.ref-flow{grid-template-columns:1fr}.ref-row{grid-template-columns:1fr}.ref-hero h1{font-size:38px}}
+.ref-hero{padding:20px 0 27px;max-width:1000px;border-bottom:1px solid var(--line);margin-bottom:24px}.ref-hero h1{font-size:3rem;line-height:1.03;margin:8px 0 11px}.ref-hero p{font-size:1.03rem;line-height:1.68;color:var(--body);max-width:930px}
+.ref-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0 24px}.ref-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.ref-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.ref-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px}.ref-card.primary{background:var(--panelhi);border-color:var(--linehi)}.ref-card h3{font-size:1.28rem!important;margin:0 0 7px}.ref-card p{font-size:.9rem;line-height:1.58;margin:0;color:var(--body)}
+.ref-section{font-family:var(--serif);font-size:1.9rem;color:var(--ink);font-weight:500;margin:34px 0 7px}.ref-sub{font-size:.92rem;color:var(--muted);line-height:1.58;max-width:950px;margin-bottom:13px}.ref-row{display:grid;grid-template-columns:1.2fr 1fr 2.6fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2);font-size:.88rem}.ref-row strong{color:var(--ink)}.ref-row span{color:var(--body);line-height:1.5}
+.ref-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}.ref-node{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px}.ref-node b{display:block;color:var(--ink);font-size:.93rem}.ref-node small{display:block;color:var(--muted);font-size:.78rem;line-height:1.48;margin-top:6px}.ref-warning{background:rgba(224,176,98,.08);border:1px solid rgba(224,176,98,.3);border-radius:14px;padding:15px 16px;color:var(--body);font-size:.9rem;line-height:1.6}.ref-policy{display:grid;grid-template-columns:95px 1fr;gap:13px;padding:12px 0;border-bottom:1px solid var(--line2)}.ref-policy b{font:700 .68rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em}.ref-policy span{font-size:.88rem;color:var(--body);line-height:1.52}.ref-stream{display:flex;justify-content:space-between;gap:13px;align-items:flex-start;border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:14px 15px;margin:8px 0}.ref-stream strong{font-size:.95rem;color:var(--ink)}.ref-stream small{display:block;font-size:.81rem;color:var(--muted);line-height:1.48;margin-top:5px}.ref-stream .count{font-family:var(--serif);font-size:1.8rem;color:var(--accent2);white-space:nowrap}
+.ref-side-state{border:1px solid rgba(108,194,160,.25);background:rgba(108,194,160,.06);padding:10px;border-radius:10px;margin:7px 0}.ref-side-state.warn{border-color:rgba(224,176,98,.25);background:rgba(224,176,98,.06)}.ref-side-state b{display:block;font-size:.8rem;color:var(--ink)}.ref-side-state span{display:block;font-size:.7rem;color:var(--muted);margin-top:3px}
+.arch-canvas{background:#f4f1eb;border:1px solid #d9d2c6;border-radius:18px;padding:22px;color:#28231e;margin:14px 0 24px;box-shadow:0 14px 40px rgba(0,0,0,.16)}.arch-canvas *{box-sizing:border-box}.arch-canvas .k{font:700 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:#7d6c5d}.arch-canvas h3{font-family:var(--serif)!important;color:#28231e!important;font-size:1.55rem!important;margin:5px 0 14px}.arch-overview{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;align-items:stretch}.arch-step{background:#fff;border:1px solid #d7d0c4;border-radius:12px;padding:12px;position:relative}.arch-step.human{border:2px solid #c97844}.arch-step strong{display:block;color:#28231e;font-size:.88rem}.arch-step span{display:block;color:#766d63;font-size:.73rem;line-height:1.45;margin-top:5px}.arch-step:not(:last-child):after{content:"→";position:absolute;right:-10px;top:43%;z-index:2;color:#a36a45;font-weight:700}.human-pill{display:inline-flex;margin-top:8px;padding:4px 6px;border-radius:999px;background:#f5ddca;color:#9b552d;font:700 9px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em}
+.arch-stack{display:grid;gap:10px}.arch-layer{background:#fff;border:1px solid #d7d0c4;border-radius:13px;padding:14px}.arch-layer-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.arch-layer-title strong{color:#28231e;font-size:.95rem}.arch-layer-title span{font:600 9px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:#8a7768}.arch-lanes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.arch-box{background:#faf8f4;border:1px solid #e2dbd0;border-radius:9px;padding:9px}.arch-box strong{display:block;color:#342e28;font-size:.76rem}.arch-box span{display:block;color:#7b7167;font-size:.67rem;line-height:1.4;margin-top:3px}.arch-govern{border:2px solid #bd7a4c;background:#fff7f0}.arch-govern .arch-box{background:#fff3e8;border-color:#e4c1a7}.arch-output{border:2px solid #6a9e87;background:#f4fbf7}.arch-output .arch-box{background:#eef8f2;border-color:#bad8c8}.arch-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.arch-legend span{font-size:.7rem;color:#655d54;border:1px solid #d7d0c4;background:#fff;border-radius:999px;padding:5px 8px}
+@media(max-width:950px){.ref-grid,.ref-grid.four,.ref-grid.two{grid-template-columns:1fr}.ref-flow{grid-template-columns:1fr}.ref-row{grid-template-columns:1fr}.ref-hero h1{font-size:2.4rem}.arch-overview,.arch-lanes{grid-template-columns:1fr}.arch-step:not(:last-child):after{content:"↓";right:50%;top:auto;bottom:-13px}}
 </style>
-""",
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
 
 
 def _footer() -> None:
-    st.markdown(
-        '<div class="fx-footer"><div>Research decision support · source-traced and auditable</div>'
-        '<div>Software qualification is not clinical validation</div></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="fx-footer"><div>Research decision support · source-traced and auditable</div><div>Software qualification is not clinical validation</div></div>', unsafe_allow_html=True)
 
 
 def _policy_row(label: str, text: str) -> str:
@@ -84,250 +55,56 @@ def _policy_row(label: str, text: str) -> str:
 
 
 def render_validation() -> None:
-    _base("validation")
-    q = COMMON_CORE_QUALIFICATION
-    challenge_planned = len(TARGETED_CASES) + len(UNSEEN_CASES) + len(REPEATED_STOCHASTIC_CASE_IDS) * REPEATED_STOCHASTIC_REPEATS
-    remediation_planned = len(REMEDIATION_CASES_V25) + len(REMEDIATION_REPEAT_CASE_IDS_V25) * REMEDIATION_REPEAT_COUNT_V25
-
-    st.markdown(
-        '<div class="ref-hero"><div class="fx-kicker">Validation, qualification, and trust boundary</div>'
-        '<h1>What has been tested, what has not, and what the system is allowed to claim.</h1>'
-        '<p>This page is intentionally layered for clinicians, governance reviewers, and research or publication reviewers. '
-        'The product separates software qualification, disease-specific validation, prospective clinical validation, and governed clinical release.</p></div>',
-        unsafe_allow_html=True,
-    )
-
-    a, b, c, d = st.columns(4)
-    a.metric("Common-core result", str(q.get("result", "unknown")).upper())
-    b.metric("Matrix executions", q.get("matrix_executions", 0))
-    c.metric("Dedicated tests", q.get("dedicated_pan_oncology_tests_passed", 0))
-    d.metric("Full regression tests", q.get("full_regression_tests_passed", 0))
-    st.caption(
-        f"Qualified build: {q.get('qualified_build', 'not represented')} · "
-        f"CI run: {q.get('workflow_run_id', 'not represented')} · "
-        f"date: {q.get('qualification_date', 'not represented')}"
-    )
-
-    st.markdown('<div class="ref-section">The validation ladder</div><div class="ref-sub">Each rung answers a different question. A higher rung requires evidence that a lower rung cannot substitute for.</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-flow">'
-        '<div class="ref-node"><b>1. Architecture ready</b><small>Registered routing, schemas, deterministic gates, and fail-closed behavior exist.</small></div>'
-        '<div class="ref-node"><b>2. Common-core qualified</b><small>Synthetic software qualification of shared behavior across registered programs.</small></div>'
-        '<div class="ref-node"><b>3. Disease-specific qualified</b><small>Disease-specific rules and evidence packages tested against predefined software criteria.</small></div>'
-        '<div class="ref-node"><b>4. Clinical validation</b><small>Independent clinical reference-standard evaluation, ideally including silent prospective assessment.</small></div>'
-        '<div class="ref-node"><b>5. Clinical release</b><small>Governance, monitoring, accountability, privacy, security, and institution-specific authorization.</small></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="ref-section">Qualification stack</div><div class="ref-sub">The original application developed several distinct test streams. They are retained as separate evidence because they answer different reliability questions.</div>', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="ref-stream"><div><strong>Baseline extraction qualification</strong><small>Q01 to Q10. Tests straightforward extraction, missing information, conflict preservation, pending-result non-inference, chronology, molecular over-interpretation, historical contamination, and safe abstention.</small></div><div class="count">{len(CASES)}</div></div>'
-        f'<div class="ref-stream"><div><strong>Challenge validation v2</strong><small>{len(TARGETED_CASES)} targeted cases plus {len(UNSEEN_CASES)} unseen cases. Six frozen cases are each repeated three times to detect stochastic instability.</small></div><div class="count">{challenge_planned}</div></div>'
-        f'<div class="ref-stream"><div><strong>Remediation validation v2.5</strong><small>{len(REMEDIATION_CASES_V25)} frozen remediation cases plus six repeated cases run three times. Targets failure modes discovered during earlier qualification cycles.</small></div><div class="count">{remediation_planned}</div></div>'
-        f'<div class="ref-stream"><div><strong>Pan-oncology common-core qualification</strong><small>Fourteen registered tumor-board programs across fifteen common scenarios, with dedicated and full-regression test gates.</small></div><div class="count">{q.get("matrix_executions", 0)}</div></div>',
-        unsafe_allow_html=True,
-    )
-
-    with st.expander("Challenge v2 acceptance policy and failure modes", expanded=True):
-        st.markdown(
-            _policy_row("Green", "100% strict overall pass across a stream, 100% exact provenance, zero prohibited assertions, and zero unsupported provenance assertions.")
-            + _policy_row("Amber", "At least 95% strict overall pass with exact provenance still 100%, zero prohibited or unsupported assertions, and no repeated-subset case failing more than once.")
-            + _policy_row("Red", "Below 95%, any provenance failure, any prohibited or unsupported assertion, or recurrent failure of the same repeated-subset case."),
-            unsafe_allow_html=True,
-        )
-        st.markdown("**Targeted failure modes represented**")
-        modes = [case.target_failure_mode for case in TARGETED_CASES]
-        st.write(" · ".join(modes))
-        st.markdown("**Unseen generalization stream**")
-        st.caption(
-            "Colorectal, breast, melanoma, lung, ovarian, pancreatic, renal, prostate, CNS, and unknown-primary cases test whether the extraction and safety logic generalizes beyond the initial hematologic examples."
-        )
-
-    with st.expander("Remediation v2.5 acceptance policy and cases", expanded=True):
-        st.markdown(
-            _policy_row("Green", "30/30 strict passes, 100% exact provenance, zero prohibited assertions, zero unsupported provenance assertions, zero semantic-integrity errors, no duplicate treatment episodes, deterministic missing-information ontology consistency, and every repeated case 3/3.")
-            + _policy_row("Amber", "29/30 strict passes with all provenance, safety, duplicate-treatment, and ontology-integrity gates perfect, with no repeated case failing more than once.")
-            + _policy_row("Red", "28/30 or fewer strict passes, any provenance or safety failure, any semantic-integrity error, any duplicate treatment episode, any ontology mismatch, or any repeated case failing more than once."),
-            unsafe_allow_html=True,
-        )
-        rows = [
-            {
-                "Case": case.case_id,
-                "Scenario": case.title,
-                "Failure mode": case.target_failure_mode,
-                "Strict core gate": case.strict_core_gate,
-            }
-            for case in REMEDIATION_CASES_V25
-        ]
-        st.dataframe(rows, use_container_width=True, hide_index=True)
-
-    st.markdown('<div class="ref-section">Current program status</div><div class="ref-sub">All registered oncology programs share the qualified common architecture. That does not establish disease-specific treatment correctness.</div>', unsafe_allow_html=True)
-    program_rows = []
+    _base("validation"); q=COMMON_CORE_QUALIFICATION; challenge_planned=len(TARGETED_CASES)+len(UNSEEN_CASES)+len(REPEATED_STOCHASTIC_CASE_IDS)*REPEATED_STOCHASTIC_REPEATS; remediation_planned=len(REMEDIATION_CASES_V25)+len(REMEDIATION_REPEAT_CASE_IDS_V25)*REMEDIATION_REPEAT_COUNT_V25
+    st.markdown('<div class="ref-hero"><div class="fx-kicker">Validation, qualification, and trust boundary</div><h1>What has been tested, what passed, and what is not yet clinically validated.</h1><p>Clinicians should not have to reverse-engineer a software qualification report to decide what a tool is allowed to claim. This page separates the tested software behavior from disease-specific clinical validation and clinical release.</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">The three questions that matter first</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-grid"><div class="ref-card"><h3>What has been tested?</h3><p>Baseline extraction, adversarial challenge cases, remediation cases, repeated stochastic cases, pan-oncology routing, deterministic integrity gates, missing-information behavior, fail-closed evidence channels, red-team challenge, consensus, and regression behavior.</p></div>'+f'<div class="ref-card primary"><h3>What has passed?</h3><p>The frozen common-core qualification record reports {escape(str(q.get("matrix_executions",0)))} matrix executions, {escape(str(q.get("dedicated_pan_oncology_tests_passed",0)))} dedicated pan-oncology tests, and {escape(str(q.get("full_regression_tests_passed",0)))} full-regression tests on the recorded build.</p></div>'+'<div class="ref-card"><h3>What has not been established?</h3><p>Disease-specific treatment correctness, prospective clinical validity, improved patient outcomes, clinical-trial eligibility, routine-care safety, regulatory authorization, and institution-specific clinical release.</p></div></div>', unsafe_allow_html=True)
+    a,b,c,d=st.columns(4); a.metric("Common-core result",str(q.get("result","unknown")).upper()); b.metric("Matrix executions",q.get("matrix_executions",0)); c.metric("Dedicated tests",q.get("dedicated_pan_oncology_tests_passed",0)); d.metric("Full regression tests",q.get("full_regression_tests_passed",0)); st.caption(f"Qualified build: {q.get('qualified_build','not represented')} · CI run: {q.get('workflow_run_id','not represented')} · date: {q.get('qualification_date','not represented')}")
+    st.markdown('<div class="ref-section">Validation ladder</div><div class="ref-sub">Each rung answers a different question. Passing one rung does not automatically establish the next.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-flow"><div class="ref-node"><b>1. Architecture ready</b><small>Registered schemas, routing, deterministic gates, and fail-closed behavior exist.</small></div><div class="ref-node"><b>2. Common-core qualified</b><small>Synthetic software qualification of shared behavior across registered programs.</small></div><div class="ref-node"><b>3. Disease-specific qualified</b><small>Disease-specific rules and evidence packages tested against predefined criteria.</small></div><div class="ref-node"><b>4. Clinical validation</b><small>Independent clinical reference-standard evaluation, ideally including silent prospective assessment.</small></div><div class="ref-node"><b>5. Clinical release</b><small>Governance, monitoring, privacy, security, accountability, and institution-specific authorization.</small></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Qualification stack</div><div class="ref-sub">Distinct test streams are retained separately because they answer different reliability questions.</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ref-stream"><div><strong>Baseline extraction qualification</strong><small>Q01–Q10 test straightforward extraction, chronology, conflicts, missingness, pending results, molecular over-interpretation, historical contamination, and safe abstention.</small></div><div class="count">{len(CASES)}</div></div>'+f'<div class="ref-stream"><div><strong>Challenge validation v2</strong><small>{len(TARGETED_CASES)} targeted and {len(UNSEEN_CASES)} unseen cases, plus repeated stochastic cases to detect instability.</small></div><div class="count">{challenge_planned}</div></div>'+f'<div class="ref-stream"><div><strong>Remediation validation v2.5</strong><small>{len(REMEDIATION_CASES_V25)} frozen remediation cases plus repeated cases targeting failure modes discovered in earlier cycles.</small></div><div class="count">{remediation_planned}</div></div>'+f'<div class="ref-stream"><div><strong>Pan-oncology common-core qualification</strong><small>Shared routing, evidence boundaries, guardrails, abstention, and regression behavior across registered programs.</small></div><div class="count">{q.get("matrix_executions",0)}</div></div>', unsafe_allow_html=True)
+    with st.expander("Challenge and remediation acceptance criteria"):
+        st.markdown(_policy_row("Green","Strict overall pass with exact provenance, zero prohibited assertions, and zero unsupported provenance assertions.")+_policy_row("Amber","Near-perfect strict pass while provenance and prohibited-assertion gates remain perfect; repeated-case instability is tightly constrained.")+_policy_row("Red","Material strict-pass degradation, any provenance failure, any prohibited or unsupported assertion, or recurrent repeated-case failure."), unsafe_allow_html=True); st.markdown("**Targeted challenge modes**"); st.write(" · ".join(case.target_failure_mode for case in TARGETED_CASES)); st.markdown("**v2.5 remediation cases**"); rows=[{"Case":case.case_id,"Scenario":case.title,"Failure mode":case.target_failure_mode,"Strict core gate":case.strict_core_gate} for case in REMEDIATION_CASES_V25]; st.dataframe(rows,use_container_width=True,hide_index=True)
+    st.markdown('<div class="ref-section">Current oncology-program status</div><div class="ref-sub">All registered programs share the qualified common architecture. This does not establish disease-specific treatment correctness.</div>', unsafe_allow_html=True)
+    program_rows=[]
     for program in PROGRAMS:
-        status = get_pathway_validation_status(program.program_id)
-        program_rows.append(
-            {
-                "Program": program.display_name,
-                "State": status.label,
-                "Common-core qualified": status.common_core_qualified,
-                "Disease-specific software qualified": status.disease_specific_software_qualified,
-                "Clinically validated": status.clinically_validated,
-            }
-        )
-    st.dataframe(program_rows, use_container_width=True, hide_index=True)
-
-    st.markdown('<div class="ref-section">What the common-core qualification tested</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-grid">'
-        '<div class="ref-card"><h3>Routing and program assignment</h3><p>Registered programs, ordinary routing, safety retention, safety-only routing, molecular and trial question routing, pediatric tie-breaking, and deterministic reassignment of incorrect program metadata.</p></div>'
-        '<div class="ref-card"><h3>Integrity and missingness</h3><p>Pending diagnosis, high-severity conflicts, missing or conflicting decision-critical information, explicit stage handling, and prevention of specialist routing when blocking information is unresolved.</p></div>'
-        '<div class="ref-card"><h3>Fail-closed evidence behavior</h3><p>Empty evidence channels cannot create guideline, molecular-actionability, translational-actionability, literature, trial-match, or safety claims.</p></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-    st.info(
-        "A stage-matching defect discovered during qualification allowed Stage II to match Stage III under generic token matching. "
-        "The matcher was corrected to exact canonical stage comparison, and the complete qualification gate was rerun successfully on the recorded build."
-    )
-
-    st.markdown('<div class="ref-section">Guardrail coverage in the live workflow</div><div class="ref-sub">These controls are enforced in code and surfaced in the Agentic Workspace inspector.</div>', unsafe_allow_html=True)
-    guards = [
-        ("Semantic integrity", "Pre-routing", "Blocks model/schema contradictions before downstream reasoning."),
-        ("Case integrity", "Pre-routing", "Checks provenance, unresolved conflicts, and unsafe case representation."),
-        ("Missing information", "Pre-routing", "Blocking gaps prevent specialist routing; nonblocking gaps remain visible."),
-        ("Explicit stage prerequisite", "Guideline", "Stage-dependent guidance requires verified provenance, clinician confirmation, and exact stage match."),
-        ("Guideline evidence boundary", "Guideline", "Only current, verified, authorized guidance can support formal guideline claims."),
-        ("Molecular evidence boundary", "Molecular", "Gene identity or model memory cannot create actionability; evidence requires source and human verification."),
-        ("Safety evidence boundary", "Safety", "Warnings and contraindications require verified attested evidence; a nonmatch is never treated as proof of safety."),
-        ("Literature claim boundary", "Literature", "PubMed retrieval surfaces candidate literature but does not itself verify a clinical claim."),
-        ("Trial eligibility boundary", "Trials", "A ClinicalTrials.gov match is explicitly not patient eligibility."),
-        ("Translational boundary", "Translational", "Mechanistic evidence cannot establish treatment efficacy or patient-level actionability."),
-        ("Clinical red team", "Post-synthesis", "Searches for unsupported leaps, conflicts, missing prerequisites, and recommendation-changing weaknesses."),
-        ("Consensus gate", "Post-red-team", "Only adjudicated, supportable outputs can reach the final brief."),
-        ("Brief claim preservation", "Presentation", "The brief and PDF are presentation transforms and cannot create new evidence."),
-        ("Governed follow-up chat", "Presentation", "Follow-up answers are restricted to the represented case and governed outputs; unsupported questions abstain."),
-    ]
-    for name, layer, purpose in guards:
-        st.markdown(
-            f'<div class="ref-row"><strong>{escape(name)}</strong><span>{escape(layer)}</span><span>{escape(purpose)}</span></div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown('<div class="ref-section">Claims this product intentionally does not make</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-warning"><b>Not established:</b> disease-specific treatment correctness, completeness of disease-specific biomarker rules, correctness of every staging system, patient-specific drug appropriateness, clinical-trial eligibility, patient outcomes, unrestricted real-world safety, clinical validation, regulatory authorization, or institutional approval for routine patient-care use.</div>',
-        unsafe_allow_html=True,
-    )
-    st.caption(
-        "The challenge and remediation protocols define rigorous acceptance criteria. This page does not label an individual challenge or remediation stream as passed unless a frozen executed study result is available in the repository. The common-core PASS is supported by a frozen qualification record."
-    )
-    _footer()
+        status=get_pathway_validation_status(program.program_id); program_rows.append({"Program":program.display_name,"State":status.label,"Common-core qualified":status.common_core_qualified,"Disease-specific software qualified":status.disease_specific_software_qualified,"Clinically validated":status.clinically_validated})
+    st.dataframe(program_rows,use_container_width=True,hide_index=True)
+    st.markdown('<div class="ref-section">Guardrails in the live workflow</div>', unsafe_allow_html=True)
+    guards=[("Semantic integrity","Before routing","Blocks internal contradictions between represented structure and source-grounded extraction."),("Case integrity","Before routing","Checks unsafe conflicts, provenance, and case representation before specialists can reason."),("Missing information","Before routing","Recommendation-blocking gaps stop routing; nonblocking gaps remain visible."),("Evidence admission","Evidence","Candidate molecular and safety evidence requires explicit clinician attestation before patient-level use."),("Guideline boundary","Guideline","Formal guidance requires verified sources and exact prerequisites where applicable."),("Molecular boundary","Molecular","Gene identity or model memory cannot create patient-level actionability."),("Safety boundary","Safety","A missing safety match is never converted into evidence that an option is safe."),("Trial boundary","Trials","A ClinicalTrials.gov match is not patient eligibility."),("Translational boundary","Translational","Mechanistic evidence cannot establish treatment efficacy or patient-level actionability."),("Safety & challenge review","After specialist synthesis","Searches for unsupported leaps, missing prerequisites, conflict, and recommendation-changing weaknesses."),("Consensus gate","After challenge review","Only supportable, adjudicated outputs can reach the board brief."),("Presentation boundary","Brief / chat / PDF","Presentation layers cannot create new evidence or silently change the decision state.")]
+    for name,layer,purpose in guards: st.markdown(f'<div class="ref-row"><strong>{escape(name)}</strong><span>{escape(layer)}</span><span>{escape(purpose)}</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Claims this product intentionally does not make</div><div class="ref-warning"><b>Not established:</b> disease-specific treatment correctness, completeness of every biomarker rule, correctness of every staging system, patient-specific drug appropriateness, trial eligibility, patient outcomes, unrestricted real-world safety, clinical validation, regulatory authorization, or institutional approval for routine patient-care use.</div>', unsafe_allow_html=True); _footer()
 
 
 def render_about() -> None:
     _base("about")
-    st.markdown(
-        '<div class="ref-hero"><div class="fx-kicker">Scientific scope and governance</div>'
-        '<h1>A tumor-board instrument, not a general oncology chatbot.</h1>'
-        '<p>The system is designed to improve how a multidisciplinary team represents a case, commissions evidence, exposes uncertainty, challenges its own synthesis, and records an auditable decision-support brief. It does not replace multidisciplinary clinical judgment.</p></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="ref-hero"><div class="fx-kicker">Scientific scope and clinical intent</div><h1>AI for tumor-board preparation—not autonomous treatment recommendation.</h1><p>The product is designed for a practicing oncologist preparing a case before tumor board. Its job is to make the case more complete, surface what is missing, organize evidence, expose uncertainty, and prepare the discussion while preserving the points where clinical judgment remains essential.</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">What the oncologist should get from it</div><div class="ref-grid four"><div class="ref-card primary"><h3>Prepare faster</h3><p>Structure a source-traced case and treatment history without manually rebuilding every detail.</p></div><div class="ref-card"><h3>Catch what is missing</h3><p>Make conflicts, pending results, unavailable evidence, and decision-critical gaps explicit before the board.</p></div><div class="ref-card"><h3>Organize the discussion</h3><p>Turn evidence, alternatives, safety issues, trials, uncertainty, and next questions into a board-ready agenda.</p></div><div class="ref-card"><h3>See what the AI did</h3><p>Inspect source provenance, evidence admission, specialist activity, challenge review, consensus, and audit events when needed.</p></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Four information classes stay separate</div><div class="ref-grid four"><div class="ref-card primary"><h3>Source fact</h3><p>A represented patient/case assertion with source provenance. Human confirmation is recorded separately from extraction.</p></div><div class="ref-card"><h3>External evidence</h3><p>Guideline, PubMed, CIViC, FDA label, ClinicalTrials.gov, or translational evidence retrieved into a bounded channel.</p></div><div class="ref-card"><h3>System interpretation</h3><p>Deterministic or agent-generated synthesis whose support and limitations remain linked to its evidence channels.</p></div><div class="ref-card"><h3>Clinician judgment</h3><p>Case confirmation, evidence attestation, disagreement, patient context, and final tumor-board judgment are never silently inferred from a model response.</p></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Safety commitments</div>', unsafe_allow_html=True)
+    commitments=[("Missing facts","Never invent missing patient facts."),("Trials","Never turn a trial match into patient eligibility."),("Molecular","Never turn a molecular database record into automatic patient-level actionability."),("Blocking gaps","Never hide unresolved recommendation-blocking information."),("Source failure","Never silently substitute unrestricted model memory when a governed evidence source fails."),("Validation","Never present software qualification as clinical validation."),("Human judgment","Preserve source provenance, system output, and clinician judgment separately.")]
+    for name,purpose in commitments: st.markdown(f'<div class="ref-row"><strong>{escape(name)}</strong><span>Commitment</span><span>{escape(purpose)}</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Privacy and deployment boundary</div><div class="ref-warning">The public research deployment is intended for synthetic or appropriately de-identified data. A real clinical deployment would require institution-specific privacy, security, identity/access management, storage controls, validation, monitoring, accountability, and clinical-release governance.</div>', unsafe_allow_html=True); _footer()
 
-    st.markdown('<div class="ref-section">Four information classes remain distinct</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-grid four">'
-        '<div class="ref-card primary"><h3>Source fact</h3><p>A patient or case assertion with represented provenance. Human confirmation is recorded separately from extraction.</p></div>'
-        '<div class="ref-card"><h3>Retrieved evidence</h3><p>Guideline, PubMed, CIViC, FDA label, ClinicalTrials.gov, or translational evidence brought into a bounded specialist channel.</p></div>'
-        '<div class="ref-card"><h3>Derived interpretation</h3><p>Deterministic or agent-generated synthesis whose support and limitations remain linked to its source channels.</p></div>'
-        '<div class="ref-card"><h3>Human judgment</h3><p>Clinician confirmation, evidence attestation, conflict resolution, or tumor-board adjudication. It is never silently inferred from a model response.</p></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
 
-    st.markdown('<div class="ref-section">Evidence model</div>', unsafe_allow_html=True)
-    evidence = [
-        ("Guidance", "Governed", "Current verified sources; exact stage and molecular prerequisites where required."),
-        ("Molecular", "Retrieve + attest", "CIViC candidate retrieval plus explicit human attestation before patient-level use."),
-        ("Safety", "Retrieve + attest", "FDA label candidate retrieval plus human attestation; label text remains distinct from a patient-specific contraindication or dose."),
-        ("Literature", "Bounded retrieval", "PubMed retrieval identifies candidate literature; it is not critical appraisal or a treatment recommendation."),
-        ("Clinical trials", "Bounded retrieval", "ClinicalTrials.gov matching; a match is not eligibility and does not recommend enrollment."),
-        ("Translational", "Mechanistic", "Mechanistic, preclinical, and human-translational evidence remains separate from clinical actionability."),
-    ]
-    for name, state, purpose in evidence:
-        st.markdown(
-            f'<div class="ref-row"><strong>{escape(name)}</strong><span>{escape(state)}</span><span>{escape(purpose)}</span></div>',
-            unsafe_allow_html=True,
-        )
+def _architecture_overview() -> str:
+    return """<div class="arch-canvas"><div class="k">Clinical overview</div><h3>The oncologist's mental model</h3><div class="arch-overview"><div class="arch-step"><strong>1 · Case</strong><span>Paste or upload the de-identified source.</span></div><div class="arch-step human"><strong>2 · Verify</strong><span>Confirm the structured case and source traces.</span><div class="human-pill">Human checkpoint</div></div><div class="arch-step human"><strong>3 · Evidence</strong><span>Review what is usable and attest bounded evidence where required.</span><div class="human-pill">Human checkpoint</div></div><div class="arch-step"><strong>4 · Challenge</strong><span>Integrity gates, specialists, and safety review test the synthesis.</span></div><div class="arch-step"><strong>5 · Synthesize</strong><span>Consensus adjudicates support, alternatives, uncertainty, and abstention.</span></div><div class="arch-step human"><strong>6 · Board brief</strong><span>Use the brief and agenda; final judgment stays with the clinical team.</span><div class="human-pill">Human judgment</div></div></div><div class="arch-legend"><span>Orange border = explicit human-in-the-loop gate</span><span>White boxes = governed software stages</span></div></div>"""
 
-    st.markdown('<div class="ref-section">Human control points</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-grid">'
-        '<div class="ref-card"><h3>Case review</h3><p>Confirm that the structured representation matches the source. Unsupported facts do not become verified merely because a clinician continues.</p></div>'
-        '<div class="ref-card"><h3>Evidence attestation</h3><p>Review candidate molecular and safety evidence before it is admitted to patient-level reasoning.</p></div>'
-        '<div class="ref-card"><h3>Decision adjudication</h3><p>The system produces decision support, alternatives, conditions, uncertainty, and abstention. Final patient-care decisions remain with qualified clinicians and local governance.</p></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
 
-    st.markdown('<div class="ref-section">Privacy and deployment boundary</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-warning">The public research deployment is intended for synthetic or appropriately de-identified data. Secrets are supplied through deployment secret management rather than committed files. A clinical deployment would require institution-specific privacy, security, validation, monitoring, accountability, and release controls.</div>',
-        unsafe_allow_html=True,
-    )
-    _footer()
+def _architecture_detailed() -> str:
+    return """<div class="arch-canvas"><div class="k">Detailed system architecture</div><h3>What happens underneath the conversation</h3><div class="arch-stack"><div class="arch-layer"><div class="arch-layer-title"><strong>1 · Representation layer</strong><span>Source → canonical case</span></div><div class="arch-lanes"><div class="arch-box"><strong>TXT / MD</strong><span>De-identified narrative</span></div><div class="arch-box"><strong>PDF / DOCX</strong><span>Document parser</span></div><div class="arch-box"><strong>Extraction v2.5</strong><span>Source-grounded structured extraction</span></div><div class="arch-box"><strong>Normalization</strong><span>Conflict, chronology, and ontology repair</span></div><div class="arch-box"><strong>Provenance</strong><span>Segment-level source verification</span></div><div class="arch-box"><strong>Canonical case</strong><span>CancerTumorBoardCase</span></div></div></div><div class="arch-layer arch-govern"><div class="arch-layer-title"><strong>2 · Governance rail</strong><span>Spans the entire workup</span></div><div class="arch-lanes"><div class="arch-box"><strong>Semantic integrity</strong><span>Blocks representation contradictions</span></div><div class="arch-box"><strong>Case integrity</strong><span>Blocks unsafe routing</span></div><div class="arch-box"><strong>Missing information</strong><span>Blocks unresolved critical gaps</span></div><div class="arch-box"><strong>Evidence admission</strong><span>Human attestation where required</span></div><div class="arch-box"><strong>Challenge review</strong><span>Tests recommendation-changing weaknesses</span></div><div class="arch-box"><strong>Abstention + audit</strong><span>Fail closed and preserve why</span></div></div></div><div class="arch-layer"><div class="arch-layer-title"><strong>3 · Evidence-source lanes</strong><span>Distinct evidence boundaries</span></div><div class="arch-lanes"><div class="arch-box"><strong>Guidelines / consensus</strong><span>Verified current source matching</span></div><div class="arch-box"><strong>CIViC</strong><span>Molecular candidates → clinician attestation</span></div><div class="arch-box"><strong>FDA labels</strong><span>Safety spans → clinician attestation</span></div><div class="arch-box"><strong>PubMed</strong><span>Candidate literature; not automatic claim verification</span></div><div class="arch-box"><strong>ClinicalTrials.gov</strong><span>Possible matches; not eligibility</span></div><div class="arch-box"><strong>Translational sources</strong><span>Mechanistic evidence; not clinical actionability</span></div></div></div><div class="arch-layer"><div class="arch-layer-title"><strong>4 · Orchestration and specialist layer</strong><span>Question-aware routing</span></div><div class="arch-lanes"><div class="arch-box"><strong>Clinical router</strong><span>Selects only needed agents</span></div><div class="arch-box"><strong>Guideline agent</strong><span>Formal guidance boundary</span></div><div class="arch-box"><strong>Molecular agent</strong><span>Actionability boundary</span></div><div class="arch-box"><strong>Safety agent</strong><span>Contraindication / warning boundary</span></div><div class="arch-box"><strong>Literature + trials</strong><span>Bounded public-source retrieval</span></div><div class="arch-box"><strong>Translational agent</strong><span>Mechanistic interpretation boundary</span></div></div></div><div class="arch-layer arch-output"><div class="arch-layer-title"><strong>5 · Adjudication and output layer</strong><span>Decision support only</span></div><div class="arch-lanes"><div class="arch-box"><strong>Preliminary synthesis</strong><span>Evidence-bounded integration</span></div><div class="arch-box"><strong>Clinical Red Team</strong><span>Challenge unsupported leaps</span></div><div class="arch-box"><strong>Consensus</strong><span>State, alternatives, conditions, uncertainty</span></div><div class="arch-box"><strong>Decision brief</strong><span>Board-ready structured artifact</span></div><div class="arch-box"><strong>Governed chat</strong><span>Follow-up restricted to current case/evidence</span></div><div class="arch-box"><strong>PDF + audit</strong><span>Presentation transform and traceability</span></div></div></div></div><div class="arch-legend"><span>Governance rail = cross-cutting safety controls</span><span>Evidence lanes stay epistemically separate</span><span>Final clinical decision remains human</span></div></div>"""
 
 
 def render_architecture() -> None:
     _base("architecture")
-    st.markdown(
-        '<div class="ref-hero"><div class="fx-kicker">System architecture</div>'
-        '<h1>The conversation is the surface. The governed pipeline is the system.</h1>'
-        '<p>The Agentic Workspace does not replace the original engine. It presents the underlying case, evidence, safety, challenge, consensus, and audit logic as a cleaner stage-by-stage conversation with a live inspector.</p></div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="ref-section">End-to-end execution path</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-flow">'
-        '<div class="ref-node"><b>1. Intake</b><small>Synthetic fixture, de-identified text, or document parsing; extraction v2.5; source provenance.</small></div>'
-        '<div class="ref-node"><b>2. Human review</b><small>Confirm the structured representation while preserving unsupported, pending, conflicting, and missing facts.</small></div>'
-        '<div class="ref-node"><b>3. Evidence commissioning</b><small>Guidance matching, CIViC and FDA candidate retrieval, human attestation, and bounded public-source channels.</small></div>'
-        '<div class="ref-node"><b>4. Governed analysis</b><small>Semantic integrity, case integrity, missing information, routing, specialists, synthesis, red team, and consensus.</small></div>'
-        '<div class="ref-node"><b>5. Decision brief</b><small>Alternatives, conditions, uncertainty, trials, safety, provenance, audit, governed follow-up, and PDF export.</small></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="ref-section">What happens underneath the conversation</div>', unsafe_allow_html=True)
-    layers = [
-        ("Representation", "Canonical CancerTumorBoardCase", "Source-traced facts, status, provenance, treatments, molecular findings, conflicts, missing items, and clinical question."),
-        ("Pre-routing safety", "Deterministic gates", "Semantic integrity, quality checks, Case Integrity / Data QA, and Missing Information can stop routing before any specialist synthesis."),
-        ("Routing", "Question-aware router", "Selects only the specialist agents required by the represented question and complexity."),
-        ("Specialists", "Bounded agents", "Guideline, molecular, literature, clinical trials, safety, and translational agents operate inside distinct evidence boundaries."),
-        ("Challenge", "Clinical Red Team", "Looks for unsupported leaps, missing prerequisites, conflict, and recommendation-changing weaknesses."),
-        ("Adjudication", "Consensus", "Produces an explicit decision state, alternatives, conditions, uncertainty, discussion priorities, and support strength."),
-        ("Presentation", "Brief, chat, PDF", "Transforms governed outputs into readable artifacts without adding evidence or silently changing the decision state."),
-    ]
-    for layer, system, purpose in layers:
-        st.markdown(
-            f'<div class="ref-row"><strong>{escape(layer)}</strong><span>{escape(system)}</span><span>{escape(purpose)}</span></div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown('<div class="ref-section">Why the right-side inspector exists</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-grid">'
-        '<div class="ref-card"><h3>Explain execution</h3><p>Shows stage, selected agents, runtime evidence channels, current decision state, and latest audit event without polluting the main conversation.</p></div>'
-        '<div class="ref-card"><h3>Expose guardrails</h3><p>Shows source-trace state, human confirmation, evidence attestation, integrity disposition, blocking gaps, red-team state, and safe-to-display status.</p></div>'
-        '<div class="ref-card"><h3>Preserve epistemic boundaries</h3><p>Source fact, retrieved evidence, derived interpretation, and human judgment remain visually distinct throughout the workup.</p></div>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="ref-section">Failure behavior</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="ref-warning"><b>Fail closed by design:</b> an unavailable evidence source, failed verification, unresolved blocking information, semantic-integrity failure, or unsupported specialist claim cannot silently fall back to general model knowledge. The workflow can abstain, withhold synthesis, or complete with explicit limitations.</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="ref-hero"><div class="fx-kicker">System architecture</div><h1>Comprehensive underneath. Simple for the oncologist on the surface.</h1><p>The interface follows the way an oncologist prepares a tumor-board case: provide the case, verify it, review evidence, let the agents challenge and synthesize, then use the brief to structure the board discussion. The detailed architecture remains inspectable without dominating the clinical workflow.</p></div>', unsafe_allow_html=True)
+    st.markdown(_architecture_overview(),unsafe_allow_html=True); st.markdown('<div class="ref-section">Detailed architecture</div><div class="ref-sub">The light canvas is intentionally separated from the dark product shell so complex system relationships are easier to scan.</div>', unsafe_allow_html=True); st.markdown(_architecture_detailed(),unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">What the clinician sees vs. what the system does</div>', unsafe_allow_html=True)
+    layers=[("Case intake","“Give me the case.”","Parse documents, run extraction v2.5, normalize chronology/conflicts, preserve provenance, assign the oncology program."),("Case review","“Did the AI represent my patient correctly?”","Show canonical facts, treatment timeline, molecular/pathology details, conflicts, missing items, and source traces."),("Evidence review","“What evidence can I actually use?”","Match formal guidance, retrieve bounded molecular and safety candidates, require attestation where necessary, prepare public-source channels."),("Agent analysis","“What do the agents agree on, and what could be wrong?”","Run integrity gates, missing-information gate, router, specialist agents, challenge review, and consensus."),("Decision brief","“What should the board discuss today?”","Present strategy, alternatives, evidence, safety, trials, uncertainty, board agenda, provenance, audit, governed chat, and PDF.")]
+    for layer,clinical,technical in layers: st.markdown(f'<div class="ref-row"><strong>{escape(layer)}</strong><span>{escape(clinical)}</span><span>{escape(technical)}</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ref-section">Why the human checkpoints are explicit</div><div class="ref-grid"><div class="ref-card"><h3>Case confirmation</h3><p>The clinician confirms that the structured representation matches the source. Continuing does not magically validate unsupported facts.</p></div><div class="ref-card"><h3>Evidence attestation</h3><p>Retrieved molecular and safety candidates do not become patient-level evidence merely because the software found them.</p></div><div class="ref-card"><h3>Final judgment</h3><p>The system prepares decision support and a board agenda. The actual patient-care decision remains a clinical-team judgment.</p></div></div>', unsafe_allow_html=True)
+    with st.expander("Technical component map"):
+        components=[("Extraction","agents/extraction_v25.py","Source-grounded extraction with deterministic hardening and explicit-stage handling."),("Canonical schema","schemas/case.py","Structured patient/case representation, provenance, treatment episodes, molecular findings, conflicts, and missing items."),("Workflow","orchestration/workflow.py","Guardrails, routing, specialist execution, challenge review, consensus, brief, and audit trail."),("Runtime evidence","services/runtime_agents.py","Governed evidence stores, public-source clients, fail-closed runtime configuration."),("Evidence commissioning","services/evidence_commissioning.py","Candidate CIViC/FDA retrieval and explicit human attestation."),("Validation","qualification/* and services/pathway_validation.py","Frozen common-core qualification plus challenge/remediation framework."),("Presentation","app/agentic_*","Guided conversational workflow and clinical/technical inspector.")]
+        for layer,path,purpose in components: st.markdown(f'<div class="ref-row"><strong>{escape(layer)}</strong><span>{escape(path)}</span><span>{escape(purpose)}</span></div>', unsafe_allow_html=True)
     _footer()
