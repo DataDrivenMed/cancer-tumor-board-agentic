@@ -55,6 +55,7 @@ _STAGE_LABEL_RE = re.compile(
 
 
 def _canonical_stage_label(value: object | None) -> str | None:
+    """Return an exact canonical stage label without deriving stage from other data."""
     text = _norm(value)
     match = _STAGE_LABEL_RE.search(text)
     if not match:
@@ -77,6 +78,12 @@ def _verified_stage_text(case: CancerTumorBoardCase) -> str:
 
 
 def _stage_requirements_match(case: CancerTumorBoardCase, stage_terms: list[str]) -> bool:
+    """Match only explicit stage labels; never use generic token overlap.
+
+    A disease pack that intends to support multiple substages must enumerate those
+    substages explicitly. This conservative rule prevents Stage II from matching
+    Stage III merely because both contain the word 'stage'.
+    """
     if not stage_terms:
         return True
     represented = _canonical_stage_label(_verified_stage_text(case))
