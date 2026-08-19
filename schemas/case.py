@@ -124,6 +124,7 @@ class CancerTumorBoardCase(BaseModel):
 
     diagnosis: Fact
     disease_state: Fact
+    stage: Fact | None = None
     performance_status: Fact | None = None
 
     pathology: list[Fact] = Field(default_factory=list)
