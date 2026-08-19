@@ -97,7 +97,9 @@ def confirm_case_representation(case: CancerTumorBoardCase) -> CancerTumorBoardC
 
 def load_synthetic() -> CancerTumorBoardCase:
     payload = json.loads((PROJECT_ROOT / "synthetic_cases" / "syn_aml_001.json").read_text(encoding="utf-8"))
-    return CancerTumorBoardCase.model_validate(payload)
+    case = CancerTumorBoardCase.model_validate(payload)
+    case.case_type = "synthetic"
+    return case
 
 
 def initialize_state() -> None:
@@ -151,17 +153,30 @@ def goto(stage: str) -> None:
     st.rerun()
 
 
+def _mark_deidentified_research(package):
+    """Correct product-layer case semantics for real de-identified user input.
+
+    The inherited extraction qualification stack historically defaults extracted
+    cases to the synthetic label. The Agentic Workspace preserves that behavior
+    inside the engine but corrects the product-facing case type after a real
+    de-identified narrative or document has been extracted.
+    """
+    package.case.case_type = "deidentified_research"
+    return package
+
+
 def extract_text_case(narrative: str, case_id: str = "AGENTIC-EXTRACTED-001"):
     token = secret("MODEL_AUTH_TOKEN") or secret("HF_TOKEN")
     if not token:
         raise RuntimeError("MODEL_AUTH_TOKEN or HF_TOKEN is required for model-based extraction.")
     document = parse_text(narrative)
-    return extract_case_v25(
+    package = extract_case_v25(
         document=document,
         api_key=token,
         model=secret("EXTRACTION_MODEL") or "openai/gpt-oss-120b:fireworks-ai",
         case_id=case_id,
     )
+    return _mark_deidentified_research(package)
 
 
 def extract_upload_case(upload, case_id: str = "AGENTIC-UPLOAD-001"):
@@ -169,12 +184,13 @@ def extract_upload_case(upload, case_id: str = "AGENTIC-UPLOAD-001"):
     if not token:
         raise RuntimeError("MODEL_AUTH_TOKEN or HF_TOKEN is required for model-based extraction.")
     document = parse_upload(upload)
-    return extract_case_v25(
+    package = extract_case_v25(
         document=document,
         api_key=token,
         model=secret("EXTRACTION_MODEL") or "openai/gpt-oss-120b:fireworks-ai",
         case_id=case_id,
     )
+    return _mark_deidentified_research(package)
 
 
 def ensure_evidence_candidates() -> None:
