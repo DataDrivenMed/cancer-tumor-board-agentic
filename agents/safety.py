@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 from schemas.case import CancerTumorBoardCase, DataStatus
-from schemas.safety import SafetyEvidenceRecord, SafetyEvidenceStore, SafetyFinding, SafetyReport, SafetySeverity
+from schemas.safety import (
+    SafetyEvidenceRecord,
+    SafetyEvidenceStore,
+    SafetyFinding,
+    SafetyReport,
+    SafetySeverity,
+)
 from services.oncology_programs import is_registered_oncology_program
+
 
 AGENT_ID = "safety"
 AGENT_VERSION = "1.2.0"
@@ -67,6 +74,7 @@ def _parameter_is_represented(case: CancerTumorBoardCase, parameter: str) -> boo
 
 class SafetyAgent:
     """Evidence-bounded pan-oncology safety specialist."""
+
     agent_id = AGENT_ID
     agent_version = AGENT_VERSION
 
@@ -76,10 +84,25 @@ class SafetyAgent:
 
     def run(self, case: CancerTumorBoardCase, *, candidate_therapy_terms: list[str] | None = None) -> SafetyReport:
         if not is_registered_oncology_program(case.disease_program):
-            return SafetyReport(case_id=case.case_id, status="abstain_domain", summary="Safety Agent received a case outside the registered oncology programs.", limitations=["The disease program must be classified into the governed pan-oncology registry before safety analysis."])
+            return SafetyReport(
+                case_id=case.case_id,
+                status="abstain_domain",
+                summary="Safety Agent received a case outside the registered oncology programs.",
+                limitations=["The disease program must be classified into the governed pan-oncology registry before safety analysis."],
+            )
+
         usable = [record for record in self.store.records if record.source_verified and record.human_verified and not (self.production_mode and record.synthetic)]
         if not usable:
-            return SafetyReport(case_id=case.case_id, status="source_unavailable", summary="No verified production safety evidence records are available.", limitations=["The agent will not infer contraindications, interactions, toxicities, or monitoring requirements from model memory.", "Absence of a matched safety record must not be interpreted as absence of risk."])
+            return SafetyReport(
+                case_id=case.case_id,
+                status="source_unavailable",
+                summary="No verified production safety evidence records are available.",
+                limitations=[
+                    "The agent will not infer contraindications, interactions, toxicities, or monitoring requirements from model memory.",
+                    "Absence of a matched safety record must not be interpreted as absence of risk.",
+                ],
+            )
+
         findings: list[SafetyFinding] = []
         for record in usable:
             matched, therapy_matches, trigger_matches = _record_matches(case, record, candidate_therapy_terms=candidate_therapy_terms)
@@ -87,12 +110,37 @@ class SafetyAgent:
                 continue
             unresolved = [p for p in record.required_parameters if not _parameter_is_represented(case, p)]
             blocking = bool(record.contraindication) or bool(unresolved and record.severity in {SafetySeverity.HIGH, SafetySeverity.CRITICAL})
-            findings.append(SafetyFinding(evidence_id=record.evidence_id, evidence_type=record.evidence_type, severity=record.severity, therapy_terms_matched=sorted(therapy_matches), trigger_terms_matched=sorted(trigger_matches), safety_issue=record.safety_issue, source_title=record.source_title, source_locator=record.source_locator, source_excerpt=record.source_excerpt, required_parameters=list(record.required_parameters), unresolved_parameters=sorted(unresolved), contraindication=record.contraindication, recommendation_blocking=blocking))
+            findings.append(SafetyFinding(
+                evidence_id=record.evidence_id, evidence_type=record.evidence_type, severity=record.severity,
+                therapy_terms_matched=sorted(therapy_matches), trigger_terms_matched=sorted(trigger_matches),
+                safety_issue=record.safety_issue, source_title=record.source_title, source_locator=record.source_locator,
+                source_excerpt=record.source_excerpt, required_parameters=list(record.required_parameters),
+                unresolved_parameters=sorted(unresolved), contraindication=record.contraindication,
+                recommendation_blocking=blocking,
+            ))
+
         findings.sort(key=lambda f: (f.evidence_id, f.safety_issue))
         if not findings:
-            return SafetyReport(case_id=case.case_id, status="no_evidence_found", summary="No verified safety record matched the represented or candidate therapies and patient context.", limitations=["No match does not establish that the therapy is safe or free of contraindications."])
+            return SafetyReport(
+                case_id=case.case_id,
+                status="no_evidence_found",
+                summary="No verified safety record matched the represented or candidate therapies and patient context.",
+                limitations=["No match does not establish that the therapy is safe or free of contraindications."],
+            )
+
         blocking = any(f.recommendation_blocking for f in findings)
         unresolved = any(f.unresolved_parameters for f in findings)
         status = "completed_with_limitations" if unresolved else "completed"
-        warnings = ["At least one matched safety finding is recommendation-blocking pending human review or resolution."] if blocking else []
-        return SafetyReport(case_id=case.case_id, status=status, findings=findings, warnings=warnings, limitations=["Safety matching does not replace prescribing information, pharmacy review, organ-function assessment, or clinician judgment.", "A matched warning is not itself a treatment recommendation; a non-match is not evidence of safety."], summary=f"Matched {len(findings)} verified safety evidence record(s) to represented or candidate therapy concepts.", can_support_safety_claim=True, recommendation_blocking=blocking)
+        warnings = []
+        if blocking:
+            warnings.append("At least one matched safety finding is recommendation-blocking pending human review or resolution.")
+
+        return SafetyReport(
+            case_id=case.case_id, status=status, findings=findings, warnings=warnings,
+            limitations=[
+                "Safety matching does not replace prescribing information, pharmacy review, organ-function assessment, or clinician judgment.",
+                "A matched warning is not itself a treatment recommendation; a non-match is not evidence of safety.",
+            ],
+            summary=f"Matched {len(findings)} verified safety evidence record(s) to represented or candidate therapy concepts.",
+            can_support_safety_claim=True, recommendation_blocking=blocking,
+        )
