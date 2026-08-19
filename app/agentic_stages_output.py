@@ -6,6 +6,7 @@ import streamlit as st
 
 from app.agentic_core import goto, human, run_guarded_workflow, txt, val
 from app.agentic_layout import claim_chip, turn
+from app.chat_ui import render_governed_chat
 
 
 def _render_specialist_outputs(result: dict) -> None:
@@ -58,7 +59,6 @@ def render_analysis() -> None:
         chips=[claim_chip("retrieved"), claim_chip("derived")],
     )
     _render_specialist_outputs(result)
-
     st.markdown("#### Preliminary synthesis")
     st.write(txt(result.get("preliminary_synthesis"), "No preliminary synthesis was produced."))
 
@@ -103,10 +103,7 @@ def render_analysis() -> None:
 
     missing = result.get("missing_information_report")
     if missing is not None and (val(missing, "items", []) or []):
-        st.markdown(
-            '<div class="guardrail"><strong>Unresolved decision-critical information</strong><p>The backend identified missing, conflicting, pending, or unavailable information. Recommendation-blocking items remain blocking regardless of conversational fluency.</p></div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="guardrail"><strong>Unresolved decision-critical information</strong><p>The backend identified missing, conflicting, pending, or unavailable information. Recommendation-blocking items remain blocking regardless of conversational fluency.</p></div>', unsafe_allow_html=True)
         with st.expander("Missing-information report", expanded=True):
             st.write(txt(val(missing, "summary")))
             for item in val(missing, "items", []) or []:
@@ -130,10 +127,7 @@ def _brief_category(epistemic: str) -> str:
 
 
 def _render_brief_sections(brief) -> None:
-    st.markdown(
-        '<div class="legend">' + claim_chip("source") + claim_chip("retrieved") + claim_chip("derived") + claim_chip("human") + '</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="legend">' + claim_chip("source") + claim_chip("retrieved") + claim_chip("derived") + claim_chip("human") + '</div>', unsafe_allow_html=True)
     for section in val(brief, "sections", []) or []:
         items_html = []
         for item in val(section, "items", []) or []:
@@ -142,19 +136,14 @@ def _render_brief_sections(brief) -> None:
             limitations = val(item, "limitations", []) or []
             refs_html = f'<div class="source-refs">Sources: {escape(", ".join(map(str, refs)))}</div>' if refs else ""
             lim_html = f'<div class="brief-note">Limitations: {escape(" · ".join(map(str, limitations)))}</div>' if limitations else ""
-            items_html.append(
-                '<div class="brief-item">'
+            items_html.append('<div class="brief-item">'
                 f'<div class="brief-label">{escape(txt(val(item, "label")))}</div>'
                 f'<div class="brief-value">{escape(txt(val(item, "value")))}</div>'
-                f'<div class="legend">{category}</div>{refs_html}{lim_html}</div>'
-            )
+                f'<div class="legend">{category}</div>{refs_html}{lim_html}</div>')
         note = txt(val(section, "section_note"), "")
-        st.markdown(
-            '<div class="brief-section">'
+        st.markdown('<div class="brief-section">'
             f'<div class="brief-title">{escape(txt(val(section, "title")))}</div>'
-            f'<div class="brief-note">{escape(note)}</div>' + "".join(items_html) + '</div>',
-            unsafe_allow_html=True,
-        )
+            f'<div class="brief-note">{escape(note)}</div>' + "".join(items_html) + '</div>', unsafe_allow_html=True)
 
 
 def render_brief() -> None:
@@ -170,7 +159,6 @@ def render_brief() -> None:
         "This is the full governed tumor-board decision-support artifact. It preserves alternatives, conditions, uncertainties, missing information, evidence traceability, and any abstention. It is not an autonomous treatment order.",
         chips=[claim_chip("derived"), claim_chip("human")],
     )
-
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Decision state", human(val(final, "decision_state")))
     c2.metric("Support", human(val(final, "decision_support_strength")))
@@ -178,12 +166,9 @@ def render_brief() -> None:
     c4.metric("Safe to display", "Yes" if val(brief, "safe_to_display", False) else "No")
 
     primary = txt(val(final, "primary_strategy"), "WITHHELD")
-    st.markdown(
-        '<div class="fx-thirty"><div class="fx-kicker">Decision-support headline</div>'
+    st.markdown('<div class="fx-thirty"><div class="fx-kicker">Decision-support headline</div>'
         f'<div class="fx-thirty-title">{escape(primary)}</div>'
-        f'<div class="fx-thirty-sub">State: {escape(human(val(final, "decision_state")))} · Support: {escape(human(val(final, "decision_support_strength")))}</div></div>',
-        unsafe_allow_html=True,
-    )
+        f'<div class="fx-thirty-sub">State: {escape(human(val(final, "decision_state")))} · Support: {escape(human(val(final, "decision_support_strength")))}</div></div>', unsafe_allow_html=True)
 
     alternatives = val(final, "alternatives", []) or []
     conditions = val(final, "conditions", []) or []
@@ -219,8 +204,7 @@ def render_brief() -> None:
     if trial_output is not None:
         with st.expander("Trial opportunities and eligibility boundary"):
             st.write(txt(val(trial_output, "summary")))
-            matches = val(trial_output, "matches", []) or []
-            for match in matches:
+            for match in val(trial_output, "matches", []) or []:
                 st.write(f"**{txt(val(match, 'nct_id'))}:** {txt(val(match, 'title'))}")
                 st.caption(txt(val(match, "rationale")))
             st.warning("TRIAL MATCH IS NOT TRIAL ELIGIBILITY. Site status and patient-specific inclusion/exclusion criteria require direct study-team confirmation.")
@@ -251,7 +235,6 @@ def render_brief() -> None:
             detail = txt(val(event, "detail", val(event, "message", "")), "")
             st.caption(f"{event_name} · {detail}")
 
-    prompt = st.chat_input("Ask a follow-up about this workup...")
-    if prompt:
-        st.session_state.ag_history.append(prompt)
-        st.info("Follow-up conversation cannot rewrite the governed brief. Use the question as a tumor-board discussion prompt and rerun the workup if new source information is added.")
+    st.markdown("#### Ask Tumor Board")
+    st.caption("Follow-up answers are grounded in the current governed case and specialist outputs. They do not create a separate recommendation from unrestricted model memory.")
+    render_governed_chat(result, st.session_state.ag_case, key_prefix="agentic_brief")
