@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import re
 
-from schemas.case import CancerTumorBoardCase
+from schemas.case import CancerTumorBoardCase, DataStatus
 from schemas.guideline import (
     GuidanceMatch,
     GuidanceRecommendation,
@@ -11,10 +12,11 @@ from schemas.guideline import (
     GuidanceSourceType,
     GuidelineReport,
 )
+from services.oncology_programs import is_registered_oncology_program
 
 
 AGENT_ID = "guideline"
-AGENT_VERSION = "1.0.0"
+AGENT_VERSION = "1.3.1"
 
 
 @dataclass(frozen=True)
@@ -44,6 +46,77 @@ def _text_match(case_value: object | None, allowed_terms: list[str]) -> bool:
         if term_tokens and term_tokens.issubset(case_tokens):
             return True
     return False
+
+
+_STAGE_LABEL_RE = re.compile(
+    r"\bstage\s+(0|[1-4](?:[abc])?(?:[1-3])?|[ivx]{1,4}(?:[abc])?(?:[1-3])?)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _canonical_stage_label(value: object | None) -> str | None:
+    text = _norm(value)
+    match = _STAGE_LABEL_RE.search(text)
+    if not match:
+        return None
+    raw = match.group(1).upper()
+    roman_to_arabic = {"I": "1", "II": "2", "III": "3", "IV": "4"}
+    for roman in ("IV", "III", "II", "I"):
+        if raw.startswith(roman):
+            return roman_to_arabic[roman] + raw[len(roman):]
+    return raw
+
+
+def _verified_stage_text(case: CancerTumorBoardCase) -> str:
+    stage = case.stage
+    if stage is None or stage.status != DataStatus.CONFIRMED or not stage.human_verified:
+        return ""
+    if not any(bool(getattr(p, "source_verified", False)) for p in (stage.provenance or [])):
+        return ""
+    return str(stage.value or "")
+
+
+def _stage_requirements_match(case: CancerTumorBoardCase, stage_terms: list[str]) -> bool:
+    if not stage_terms:
+        return True
+    represented = _canonical_stage_label(_verified_stage_text(case))
+    if not represented:
+        return False
+    allowed = {
+        label
+        for term in stage_terms
+        if (label := _canonical_stage_label(term)) is not None
+    }
+    return represented in allowed
+
+
+def _verified_molecular_text(case: CancerTumorBoardCase) -> str:
+    values: list[str] = []
+    for finding in case.molecular_findings:
+        if not finding.human_verified:
+            continue
+        if not any(bool(getattr(p, "source_verified", False)) for p in (finding.provenance or [])):
+            continue
+        values.extend(
+            str(value)
+            for value in (
+                finding.gene,
+                finding.alteration_type,
+                finding.hgvs_c,
+                finding.hgvs_p,
+            )
+            if value
+        )
+    return _norm(" ".join(values))
+
+
+def _molecular_requirements_match(case: CancerTumorBoardCase, required_terms: list[str]) -> bool:
+    if not required_terms:
+        return True
+    represented = _verified_molecular_text(case)
+    if not represented:
+        return False
+    return all(_norm(term) and _norm(term) in represented for term in required_terms)
 
 
 def _question_domain(case: CancerTumorBoardCase) -> str:
@@ -83,12 +156,7 @@ def _label(source_type: GuidanceSourceType) -> str:
 
 
 class GuidelineAgent:
-    """Evidence-bounded guidance matcher.
-
-    The agent never invents guideline content. It only returns recommendations that
-    already exist in a verified evidence store and match the represented case.
-    Synthetic fixtures are disabled by default and are intended only for tests/UI demos.
-    """
+    """Evidence-bounded pan-oncology guidance matcher with stage and molecular prerequisites."""
 
     agent_id = AGENT_ID
     agent_version = AGENT_VERSION
@@ -105,12 +173,12 @@ class GuidelineAgent:
         self.today = today or date.today()
 
     def run(self, case: CancerTumorBoardCase) -> GuidelineReport:
-        if case.disease_program != "hematologic_malignancy":
+        if not is_registered_oncology_program(case.disease_program):
             return GuidelineReport(
                 case_id=case.case_id,
                 status="abstain_domain",
-                summary="Guideline Agent v1 is restricted to hematologic malignancy cases.",
-                limitations=["Case is outside the v1 hematologic-malignancy domain."],
+                summary="Guideline Agent received a case outside the registered oncology programs.",
+                limitations=["The disease program must be classified into the governed pan-oncology registry before analysis."],
             )
 
         sources = list(self.store.sources)
@@ -134,7 +202,7 @@ class GuidelineAgent:
                 sources_considered=0,
                 recommendations_considered=0,
                 summary="No guidance evidence source is configured; no guideline claim can be generated.",
-                limitations=["A verified, authorized guidance source must be connected before guideline analysis can run."],
+                limitations=["A verified, authorized disease-specific guidance source must be connected before guideline analysis can run."],
                 can_support_guideline_claim=False,
             )
 
@@ -156,6 +224,8 @@ class GuidelineAgent:
         question_domain = _question_domain(case)
         matches: list[GuidanceMatch] = []
         expired_or_outdated = 0
+        stage_prerequisite_misses = 0
+        molecular_prerequisite_misses = 0
 
         for rec in verified_recommendations:
             source = source_by_id[rec.source_id]
@@ -168,14 +238,24 @@ class GuidelineAgent:
                 continue
             if rec.question_domains and question_domain not in rec.question_domains:
                 continue
+            if not _stage_requirements_match(case, rec.stage_terms):
+                stage_prerequisite_misses += 1
+                continue
+            if not _molecular_requirements_match(case, rec.required_molecular_terms):
+                molecular_prerequisite_misses += 1
+                continue
 
             dimensions: list[str] = []
             if rec.disease_terms:
                 dimensions.append("diagnosis")
             if rec.disease_states:
                 dimensions.append("disease_state")
+            if rec.stage_terms:
+                dimensions.append("verified_explicit_stage_prerequisite")
             if rec.question_domains:
                 dimensions.append("question_domain")
+            if rec.required_molecular_terms:
+                dimensions.append("verified_molecular_prerequisite")
 
             matches.append(GuidanceMatch(
                 recommendation_id=rec.recommendation_id,
@@ -190,6 +270,9 @@ class GuidelineAgent:
                 strength=rec.strength,
                 evidence_level=rec.evidence_level,
                 match_dimensions=dimensions,
+                stage_terms=rec.stage_terms,
+                required_molecular_terms=rec.required_molecular_terms,
+                therapy_terms=rec.therapy_terms,
                 conditions=rec.conditions,
                 exclusions=rec.exclusions,
                 epistemic_label=_label(source.source_type),
@@ -206,6 +289,14 @@ class GuidelineAgent:
         limitations: list[str] = []
         if expired_or_outdated:
             warnings.append(f"{expired_or_outdated} verified recommendation(s) were excluded because the source/recommendation was not current on {self.today.isoformat()}.")
+        if stage_prerequisite_misses:
+            limitations.append(
+                f"{stage_prerequisite_misses} stage-dependent recommendation(s) were excluded because the required explicit stage was not represented with verified provenance and clinician confirmation."
+            )
+        if molecular_prerequisite_misses:
+            limitations.append(
+                f"{molecular_prerequisite_misses} targeted recommendation(s) were excluded because required molecular prerequisites were not represented with verified case provenance."
+            )
         if matches and formal_matches == 0:
             limitations.append(
                 "Matched evidence does not include a formal or consensus guideline; it must not be described as a guideline recommendation."
@@ -222,7 +313,7 @@ class GuidelineAgent:
                 formal_guideline_matches=0,
                 warnings=warnings,
                 limitations=limitations,
-                summary="No current verified guidance recommendation matched the represented diagnosis, disease state, and question domain.",
+                summary="No current verified disease-specific guidance recommendation matched the represented diagnosis, disease state, explicit stage prerequisites, question domain, and required molecular prerequisites.",
                 can_support_guideline_claim=False,
             )
 
