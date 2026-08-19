@@ -18,4 +18,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Stable single-entry renderer. Keeping routing out of the entry point avoids
+# stale multipage path errors on Streamlit Cloud.
 render_agentic_home()
