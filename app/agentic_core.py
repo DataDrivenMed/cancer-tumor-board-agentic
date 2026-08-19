@@ -116,6 +116,12 @@ def initialize_state() -> None:
         "ag_runtime_status": None,
         "ag_result": None,
         "ag_evidence_confirmed": False,
+        "ag_evidence_summary": {
+            "molecular_candidates": 0,
+            "molecular_attested": 0,
+            "safety_candidates": 0,
+            "safety_attested": 0,
+        },
         "ag_history": [],
     }
     for key, value in defaults.items():
@@ -170,12 +176,19 @@ def ensure_evidence_candidates() -> None:
     guideline_store = st.session_state.ag_guideline_store or public_eln_aml_store()
     st.session_state.ag_guideline_store = guideline_store
     try:
-        st.session_state.ag_evidence_candidates = collect_case_candidates(
+        candidates = collect_case_candidates(
             case,
             guideline_store,
             civic_api_key=secret("CIVIC_API_KEY"),
             openfda_api_key=secret("OPENFDA_API_KEY"),
         )
+        st.session_state.ag_evidence_candidates = candidates
+        st.session_state.ag_evidence_summary = {
+            "molecular_candidates": len(val(candidates, "molecular_records", []) or []),
+            "molecular_attested": 0,
+            "safety_candidates": len(val(candidates, "safety_records", []) or []),
+            "safety_attested": 0,
+        }
     except Exception as exc:
         st.session_state.ag_evidence_error = f"{type(exc).__name__}: {exc}"
 
@@ -183,6 +196,12 @@ def ensure_evidence_candidates() -> None:
 def commission_evidence(molecular_records, molecular_ids: set[str], safety_records, safety_indices: set[int]) -> None:
     st.session_state.ag_molecular_store = build_approved_molecular_store(molecular_records, molecular_ids)
     st.session_state.ag_safety_store = build_approved_safety_store(safety_records, safety_indices)
+    st.session_state.ag_evidence_summary = {
+        "molecular_candidates": len(molecular_records),
+        "molecular_attested": len(molecular_ids),
+        "safety_candidates": len(safety_records),
+        "safety_attested": len(safety_indices),
+    }
     st.session_state.ag_evidence_confirmed = True
     st.session_state.ag_result = None
 
