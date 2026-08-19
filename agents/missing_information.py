@@ -13,7 +13,7 @@ from schemas.missing_information import (
 
 
 AGENT_ID = "missing_information"
-AGENT_VERSION = "1.0.0"
+AGENT_VERSION = "1.1.0"
 
 _PRIORITY_SCORE = {
     MissingInformationPriority.CRITICAL: 100,
@@ -45,6 +45,8 @@ def _status_unresolved(status: DataStatus) -> bool:
 
 def _category_for(field: str, reason: str) -> str:
     text = f"{field} {reason}".lower()
+    if any(token in text for token in ("stage", "staging")):
+        return "stage"
     if any(token in text for token in ("flt3", "npm1", "idh1", "idh2", "fish", "cytogen", "karyotype", "molecular", "mutation", "sequenc", "ngs")):
         return "molecular"
     if any(token in text for token in ("pathology", "biopsy", "histology", "marrow", "tissue")):
@@ -168,6 +170,28 @@ def _structural_items(case: CancerTumorBoardCase) -> list[MissingInformationItem
             source_segment_ids=_segments_from_fact(case.disease_state),
         ))
 
+    stage = case.stage
+    if stage is not None and (_status_unresolved(stage.status) or stage.value in {None, ""}):
+        stage_conflicting = stage.status == DataStatus.CONFLICTING
+        items.append(_make_item(
+            field="cancer stage",
+            category="stage",
+            priority=MissingInformationPriority.CRITICAL if stage_conflicting else MissingInformationPriority.HIGH,
+            reason=(
+                "Distinct explicit stage statements are represented and require source or temporal reconciliation before management synthesis."
+                if stage_conflicting
+                else "Stage is explicitly represented as unresolved and requires review before it is used in tumor-board reasoning."
+            ),
+            availability=stage.status.value,
+            recommendation_blocking=stage_conflicting,
+            action=MissingInformationAction.RESOLVE_CONFLICT if stage_conflicting else (
+                MissingInformationAction.REVIEW if stage.status == DataStatus.PENDING else MissingInformationAction.OBTAIN
+            ),
+            source="structural_rule",
+            field_path="stage",
+            source_segment_ids=_segments_from_fact(stage),
+        ))
+
     ps = case.performance_status
     if ps is None or _status_unresolved(ps.status) or ps.value in {None, ""}:
         availability = "not_documented" if ps is None else ps.status.value
@@ -242,7 +266,6 @@ def _conflict_items(case: CancerTumorBoardCase) -> list[MissingInformationItem]:
 
 
 def _deduplicate(items: list[MissingInformationItem]) -> list[MissingInformationItem]:
-    # Keep the highest-priority representation of a semantically equivalent gap.
     best: dict[tuple[str, str], MissingInformationItem] = {}
     rank = {"low": 1, "moderate": 2, "high": 3, "critical": 4}
     for item in items:

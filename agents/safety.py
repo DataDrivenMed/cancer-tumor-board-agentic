@@ -8,36 +8,31 @@ from schemas.safety import (
     SafetyReport,
     SafetySeverity,
 )
+from services.oncology_programs import is_registered_oncology_program
 
 
 AGENT_ID = "safety"
-AGENT_VERSION = "1.0.0"
+AGENT_VERSION = "1.2.0"
 
 
 def _norm(value: object | None) -> str:
     return " ".join(str(value or "").lower().replace("_", " ").replace("-", " ").split())
 
 
-def _therapy_text(case: CancerTumorBoardCase) -> str:
+def _therapy_text(case: CancerTumorBoardCase, candidate_therapy_terms: list[str] | None = None) -> str:
     parts: list[str] = []
     for episode in case.treatments:
         parts.extend([episode.regimen, *episode.agents])
     for fact in case.current_medications:
         if fact.status == DataStatus.CONFIRMED:
             parts.extend([fact.field, str(fact.value or "")])
+    parts.extend(candidate_therapy_terms or [])
     return _norm(" ".join(parts))
 
 
 def _patient_context_text(case: CancerTumorBoardCase) -> str:
     parts: list[str] = []
-    collections = [
-        case.comorbidities,
-        case.toxicities,
-        case.labs,
-        case.imaging,
-        case.pathology,
-        case.current_medications,
-    ]
+    collections = [case.comorbidities, case.toxicities, case.labs, case.imaging, case.pathology, case.current_medications]
     for collection in collections:
         for fact in collection:
             if fact.status == DataStatus.CONFIRMED:
@@ -47,24 +42,20 @@ def _patient_context_text(case: CancerTumorBoardCase) -> str:
     return _norm(" ".join(parts))
 
 
-def _record_matches(case: CancerTumorBoardCase, record: SafetyEvidenceRecord) -> tuple[bool, list[str], list[str]]:
+def _record_matches(case: CancerTumorBoardCase, record: SafetyEvidenceRecord, *, candidate_therapy_terms: list[str] | None = None) -> tuple[bool, list[str], list[str]]:
     if not record.source_verified or not record.human_verified:
         return False, [], []
-
-    therapy_text = _therapy_text(case)
+    therapy_text = _therapy_text(case, candidate_therapy_terms)
     therapy_matches = [term for term in record.therapy_terms if _norm(term) and _norm(term) in therapy_text]
     if record.therapy_terms and not therapy_matches:
         return False, [], []
-
     diagnosis = _norm(case.diagnosis.value)
     if record.disease_terms and not any(_norm(term) in diagnosis or diagnosis in _norm(term) for term in record.disease_terms if _norm(term)):
         return False, [], []
-
     context = _patient_context_text(case)
     trigger_matches = [term for term in record.trigger_terms if _norm(term) and _norm(term) in context]
     if record.trigger_terms and not trigger_matches:
         return False, [], []
-
     return True, therapy_matches, trigger_matches
 
 
@@ -72,13 +63,7 @@ def _parameter_is_represented(case: CancerTumorBoardCase, parameter: str) -> boo
     needle = _norm(parameter)
     if not needle:
         return False
-    facts = [
-        *case.labs,
-        *case.imaging,
-        *case.pathology,
-        *case.comorbidities,
-        *case.toxicities,
-    ]
+    facts = [*case.labs, *case.imaging, *case.pathology, *case.comorbidities, *case.toxicities]
     for fact in facts:
         if fact.status != DataStatus.CONFIRMED:
             continue
@@ -88,12 +73,7 @@ def _parameter_is_represented(case: CancerTumorBoardCase, parameter: str) -> boo
 
 
 class SafetyAgent:
-    """Evidence-bounded safety specialist.
-
-    Version 1 is deterministic. It matches represented therapies and patient-context
-    triggers to pre-verified safety evidence. It never infers a contraindication,
-    interaction, dose adjustment, or monitoring requirement from model memory.
-    """
+    """Evidence-bounded pan-oncology safety specialist."""
 
     agent_id = AGENT_ID
     agent_version = AGENT_VERSION
@@ -102,19 +82,16 @@ class SafetyAgent:
         self.store = store or SafetyEvidenceStore()
         self.production_mode = production_mode
 
-    def run(self, case: CancerTumorBoardCase) -> SafetyReport:
-        if case.disease_program != "hematologic_malignancy":
+    def run(self, case: CancerTumorBoardCase, *, candidate_therapy_terms: list[str] | None = None) -> SafetyReport:
+        if not is_registered_oncology_program(case.disease_program):
             return SafetyReport(
                 case_id=case.case_id,
                 status="abstain_domain",
-                summary="Safety Agent v1 is restricted to hematologic malignancy tumor-board cases.",
-                limitations=["Case is outside the v1 hematologic-malignancy domain."],
+                summary="Safety Agent received a case outside the registered oncology programs.",
+                limitations=["The disease program must be classified into the governed pan-oncology registry before safety analysis."],
             )
 
-        usable = [
-            record for record in self.store.records
-            if record.source_verified and record.human_verified and not (self.production_mode and record.synthetic)
-        ]
+        usable = [record for record in self.store.records if record.source_verified and record.human_verified and not (self.production_mode and record.synthetic)]
         if not usable:
             return SafetyReport(
                 case_id=case.case_id,
@@ -128,37 +105,26 @@ class SafetyAgent:
 
         findings: list[SafetyFinding] = []
         for record in usable:
-            matched, therapy_matches, trigger_matches = _record_matches(case, record)
+            matched, therapy_matches, trigger_matches = _record_matches(case, record, candidate_therapy_terms=candidate_therapy_terms)
             if not matched:
                 continue
             unresolved = [p for p in record.required_parameters if not _parameter_is_represented(case, p)]
-            blocking = bool(record.contraindication) or bool(
-                unresolved and record.severity in {SafetySeverity.HIGH, SafetySeverity.CRITICAL}
-            )
-            findings.append(
-                SafetyFinding(
-                    evidence_id=record.evidence_id,
-                    evidence_type=record.evidence_type,
-                    severity=record.severity,
-                    therapy_terms_matched=sorted(therapy_matches),
-                    trigger_terms_matched=sorted(trigger_matches),
-                    safety_issue=record.safety_issue,
-                    source_title=record.source_title,
-                    source_locator=record.source_locator,
-                    source_excerpt=record.source_excerpt,
-                    required_parameters=list(record.required_parameters),
-                    unresolved_parameters=sorted(unresolved),
-                    contraindication=record.contraindication,
-                    recommendation_blocking=blocking,
-                )
-            )
+            blocking = bool(record.contraindication) or bool(unresolved and record.severity in {SafetySeverity.HIGH, SafetySeverity.CRITICAL})
+            findings.append(SafetyFinding(
+                evidence_id=record.evidence_id, evidence_type=record.evidence_type, severity=record.severity,
+                therapy_terms_matched=sorted(therapy_matches), trigger_terms_matched=sorted(trigger_matches),
+                safety_issue=record.safety_issue, source_title=record.source_title, source_locator=record.source_locator,
+                source_excerpt=record.source_excerpt, required_parameters=list(record.required_parameters),
+                unresolved_parameters=sorted(unresolved), contraindication=record.contraindication,
+                recommendation_blocking=blocking,
+            ))
 
         findings.sort(key=lambda f: (f.evidence_id, f.safety_issue))
         if not findings:
             return SafetyReport(
                 case_id=case.case_id,
                 status="no_evidence_found",
-                summary="No verified safety record matched the represented therapies and patient context.",
+                summary="No verified safety record matched the represented or candidate therapies and patient context.",
                 limitations=["No match does not establish that the therapy is safe or free of contraindications."],
             )
 
@@ -170,15 +136,11 @@ class SafetyAgent:
             warnings.append("At least one matched safety finding is recommendation-blocking pending human review or resolution.")
 
         return SafetyReport(
-            case_id=case.case_id,
-            status=status,
-            findings=findings,
-            warnings=warnings,
+            case_id=case.case_id, status=status, findings=findings, warnings=warnings,
             limitations=[
                 "Safety matching does not replace prescribing information, pharmacy review, organ-function assessment, or clinician judgment.",
                 "A matched warning is not itself a treatment recommendation; a non-match is not evidence of safety.",
             ],
-            summary=f"Matched {len(findings)} verified safety evidence record(s) to represented case concepts.",
-            can_support_safety_claim=True,
-            recommendation_blocking=blocking,
+            summary=f"Matched {len(findings)} verified safety evidence record(s) to represented or candidate therapy concepts.",
+            can_support_safety_claim=True, recommendation_blocking=blocking,
         )

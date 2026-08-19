@@ -1,0 +1,1 @@
+"""Synthetic qualification case assets."""
