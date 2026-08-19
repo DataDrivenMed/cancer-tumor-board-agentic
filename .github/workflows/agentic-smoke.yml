@@ -1,0 +1,29 @@
+name: Agentic smoke test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [agentic-comprehensive-rebuild]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile application modules
+        run: python -m compileall -q app agents services schemas orchestration qualification
+
+      - name: Run agentic import smoke tests
+        run: pytest -q tests/test_agentic_import_smoke.py tests/test_agentic_product_contract.py
