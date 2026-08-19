@@ -13,7 +13,7 @@ from app.agentic_home import render_agentic_home
 
 st.set_page_config(
     page_title="Tumor Board Intelligence",
-    page_icon="TB",
+    page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
