@@ -18,6 +18,12 @@ from services.pubmed_client import PubMedClient
 
 
 class CandidateAwareSafetyAgent:
+    """Run the existing Safety Agent against represented and guideline-candidate therapies.
+
+    Therapy concepts are taken from structured ``therapy_terms`` on verified guidance
+    matches. No therapy name is guessed from free-text recommendation prose.
+    """
+
     agent_id = "safety"
     agent_version = "1.1.0"
 
@@ -42,6 +48,7 @@ class CandidateAwareSafetyAgent:
 
 
 def _runtime_error(channel: str, exc: Exception) -> dict[str, Any]:
+    """Return a non-secret runtime status for a channel that failed to initialize."""
     return {
         "channel": channel,
         "configured": False,
@@ -103,6 +110,7 @@ def _safe_status(channel: str, loader, empty_store):
 
 
 def _governed_stores():
+    """Load governed stores independently so one channel cannot crash the product."""
     try:
         from services import guideline_sources
         guideline_store, guideline_status = _safe_status(
@@ -184,6 +192,13 @@ def _governed_stores():
 
 
 def resolve_product_guideline_store() -> tuple[GuidelineEvidenceStore, EvidenceConfigStatus]:
+    """Resolve the guideline store for the clinician product.
+
+    An explicitly configured governed deployment package always takes precedence.
+    If none is configured, the product falls back to its deliberately narrow bundled
+    open-access ELN AML consensus record. The core backend itself remains fail-closed
+    by default, which preserves existing backend and historical regression semantics.
+    """
     try:
         from services import guideline_sources
         configured_store, configured_status = guideline_sources._load_production_guideline_store()
@@ -226,6 +241,12 @@ def build_runtime_registry(
     safety_store_override: SafetyEvidenceStore | None = None,
     translational_store_override: TranslationalEvidenceStore | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build the specialist registry from governed stores and official public clients.
+
+    Session overrides are used only after explicit human evidence approval in the
+    clinician workspace. They do not alter files, environment secrets, or the frozen
+    historical qualification artifacts.
+    """
     literature, pubmed_status = _pubmed_agent()
     trials, trials_status = _trials_agent()
     (
@@ -298,6 +319,7 @@ def build_runtime_registry(
 
 
 def _fallback_registry() -> dict[str, Any]:
+    """Return a fully fail-closed registry that is safe to install after startup failure."""
     return {
         "guideline": GuidelineAgent(),
         "molecular": MolecularInterpretationAgent(production_mode=True),
@@ -315,6 +337,12 @@ def configure_workflow_runtime(
     safety_store_override: SafetyEvidenceStore | None = None,
     translational_store_override: TranslationalEvidenceStore | None = None,
 ) -> dict[str, Any]:
+    """Install deployment/session-specific agents into the existing core orchestrator.
+
+    Startup must never convert an optional evidence-source problem into a full product
+    outage. If initialization fails unexpectedly, a fail-closed empty registry is
+    installed and the non-secret error type/message is returned in runtime status.
+    """
     from orchestration import workflow
 
     try:
