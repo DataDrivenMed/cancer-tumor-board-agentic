@@ -3,25 +3,33 @@ from __future__ import annotations
 from datetime import date
 
 from agents.guideline import GuidelineEvidenceStore
-from schemas.guideline import (
-    GuidanceRecommendation,
-    GuidanceSource,
-    GuidanceSourceType,
-    GuidanceStrength,
-)
+from schemas.guideline import GuidanceRecommendation, GuidanceSource, GuidanceSourceType, GuidanceStrength
+from services.production_evidence_config import EvidenceConfigStatus, load_channel_payload
 
 
-# Production-safe default. No clinical guidance content is bundled until a source has
-# been explicitly licensed/authorized, ingested, versioned, hashed, and verified.
-PRODUCTION_GUIDELINE_STORE = GuidelineEvidenceStore()
+def _load_production_guideline_store() -> tuple[GuidelineEvidenceStore, EvidenceConfigStatus]:
+    payload, status = load_channel_payload("guideline")
+    if payload is None:
+        return GuidelineEvidenceStore(), status
+    try:
+        if not isinstance(payload, dict):
+            raise ValueError("Guideline evidence configuration must be a JSON object.")
+        sources = tuple(GuidanceSource.model_validate(x) for x in payload.get("sources", []))
+        recommendations = tuple(GuidanceRecommendation.model_validate(x) for x in payload.get("recommendations", []))
+        source_ids = {s.source_id for s in sources}
+        orphaned = sorted({r.source_id for r in recommendations if r.source_id not in source_ids})
+        if orphaned:
+            raise ValueError(f"Guideline recommendations reference unknown source_id values: {orphaned}")
+        store = GuidelineEvidenceStore(sources=sources, recommendations=recommendations)
+        return store, EvidenceConfigStatus(channel="guideline", configured=True, loaded=True, source_count=len(sources), record_count=len(recommendations), configuration_origin=status.configuration_origin)
+    except Exception as exc:
+        return GuidelineEvidenceStore(), EvidenceConfigStatus(channel="guideline", configured=True, loaded=False, error=f"{type(exc).__name__}: {exc}", configuration_origin=status.configuration_origin)
+
+
+PRODUCTION_GUIDELINE_STORE, PRODUCTION_GUIDELINE_STATUS = _load_production_guideline_store()
 
 
 def synthetic_guideline_store() -> GuidelineEvidenceStore:
-    """Synthetic evidence only for deterministic software testing and UI demonstrations.
-
-    These statements are intentionally fictional and must never be interpreted as
-    clinical guidance. GuidelineAgent requires allow_synthetic=True to use them.
-    """
     source = GuidanceSource(
         source_id="SYN-GUIDE-001",
         title="Synthetic Hematologic Malignancy Guidance Fixture",
