@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 from schemas.case import CancerTumorBoardCase, MolecularFinding
-from schemas.translational import TranslationalEvidenceRecord, TranslationalEvidenceStore, TranslationalEvidenceTier, TranslationalFinding, TranslationalReport
+from schemas.translational import (
+    TranslationalEvidenceRecord,
+    TranslationalEvidenceStore,
+    TranslationalEvidenceTier,
+    TranslationalFinding,
+    TranslationalReport,
+)
 from services.oncology_programs import is_registered_oncology_program
+
 
 AGENT_ID = "translational"
 AGENT_VERSION = "1.1.0"
@@ -31,7 +38,10 @@ def _record_matches(case: CancerTumorBoardCase, finding: MolecularFinding, recor
         represented_terms = _alteration_terms(finding)
         if not represented_terms:
             return False
-        if not any(any(_norm(term) == represented or _norm(term) in represented or represented in _norm(term) for represented in represented_terms) for term in record.alteration_terms if _norm(term)):
+        if not any(
+            any(_norm(term) == represented or _norm(term) in represented or represented in _norm(term) for represented in represented_terms)
+            for term in record.alteration_terms if _norm(term)
+        ):
             return False
     return True
 
@@ -50,6 +60,7 @@ def _strongest_tier(records: list[TranslationalEvidenceRecord]) -> Translational
 
 class TranslationalBiologyAgent:
     """Evidence-bounded pan-oncology translational specialist."""
+
     agent_id = AGENT_ID
     agent_version = AGENT_VERSION
 
@@ -59,12 +70,33 @@ class TranslationalBiologyAgent:
 
     def run(self, case: CancerTumorBoardCase) -> TranslationalReport:
         if not is_registered_oncology_program(case.disease_program):
-            return TranslationalReport(case_id=case.case_id, status="abstain_domain", summary="Translational Biology Agent received a case outside the registered oncology programs.", limitations=["The disease program must be classified into the governed pan-oncology registry before translational analysis."])
+            return TranslationalReport(
+                case_id=case.case_id,
+                status="abstain_domain",
+                summary="Translational Biology Agent received a case outside the registered oncology programs.",
+                limitations=["The disease program must be classified into the governed pan-oncology registry before translational analysis."],
+            )
+
         if not case.molecular_findings:
-            return TranslationalReport(case_id=case.case_id, status="no_evidence_found", summary="No represented molecular finding is available for translational matching.", limitations=["Absence of represented findings does not establish a negative molecular evaluation."])
+            return TranslationalReport(
+                case_id=case.case_id,
+                status="no_evidence_found",
+                summary="No represented molecular finding is available for translational matching.",
+                limitations=["Absence of represented findings does not establish a negative molecular evaluation."],
+            )
+
         usable_records = [record for record in self.store.records if record.source_verified and record.human_verified and not (self.production_mode and record.synthetic)]
         if not usable_records:
-            return TranslationalReport(case_id=case.case_id, status="source_unavailable", summary="No verified production translational evidence records are available.", limitations=["The agent will not generate mechanistic hypotheses from model memory.", "Mechanistic or preclinical evidence cannot establish clinical actionability."])
+            return TranslationalReport(
+                case_id=case.case_id,
+                status="source_unavailable",
+                summary="No verified production translational evidence records are available.",
+                limitations=[
+                    "The agent will not generate mechanistic hypotheses from model memory.",
+                    "Mechanistic or preclinical evidence cannot establish clinical actionability.",
+                ],
+            )
+
         findings: list[TranslationalFinding] = []
         any_match = False
         for molecular_finding in case.molecular_findings:
@@ -84,10 +116,23 @@ class TranslationalBiologyAgent:
                 clinical_actionability_claim=False,
                 limitations=[] if matched else ["No verified disease- and alteration-matched translational record was found; no mechanism was inferred."],
             ))
+
         if not any_match:
             status = "no_evidence_found"
             summary = "Represented molecular findings were evaluated, but no verified disease- and alteration-matched translational records were found."
         else:
             status = "completed" if all(finding.matched_evidence_ids for finding in findings) else "completed_with_limitations"
             summary = f"Matched translational evidence for {sum(bool(f.matched_evidence_ids) for f in findings)} of {len(findings)} represented molecular finding(s)."
-        return TranslationalReport(case_id=case.case_id, status=status, findings=findings, limitations=["Translational evidence describes mechanism or experimental association and does not establish treatment efficacy, regulatory indication, or patient-level eligibility.", "Clinical actionability remains the responsibility of separately verified clinical evidence and the Molecular Interpretation Agent."], summary=summary, can_support_mechanistic_claim=any_match, can_support_clinical_actionability_claim=False)
+
+        return TranslationalReport(
+            case_id=case.case_id,
+            status=status,
+            findings=findings,
+            limitations=[
+                "Translational evidence describes mechanism or experimental association and does not establish treatment efficacy, regulatory indication, or patient-level eligibility.",
+                "Clinical actionability remains the responsibility of separately verified clinical evidence and the Molecular Interpretation Agent.",
+            ],
+            summary=summary,
+            can_support_mechanistic_claim=any_match,
+            can_support_clinical_actionability_claim=False,
+        )
